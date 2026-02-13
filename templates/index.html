@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aquera Asset Tag Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-6">
+
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+        <div class="bg-blue-600 p-6 text-center">
+            <h1 class="text-2xl font-bold text-white mb-1">Asset Tag Generator</h1>
+            <p class="text-blue-100 text-sm">Generate Barcode PDF Labels</p>
+        </div>
+
+        <div class="p-8">
+            <form action="/generate" method="POST" id="generateForm">
+                <!-- Mode Selection -->
+                <div class="flex rounded-md bg-gray-100 p-1 mb-6">
+                    <button type="button" id="btn-range"
+                        class="w-1/2 py-2 px-4 rounded shadow-sm text-sm font-medium bg-white text-gray-900 transition-all"
+                        onclick="switchMode('range')">Range</button>
+                    <button type="button" id="btn-list"
+                        class="w-1/2 py-2 px-4 rounded text-sm font-medium text-gray-500 hover:text-gray-900 transition-all"
+                        onclick="switchMode('list')">Custom List</button>
+                </div>
+
+                <input type="hidden" name="mode" id="mode-input" value="range">
+
+                <!-- Range Input Section -->
+                <div id="section-range" class="space-y-4">
+                    <div class="flex space-x-4">
+                        <div class="w-1/2">
+                            <label for="start_tag" class="block text-sm font-medium text-gray-700 mb-1">Start Tag
+                                ID</label>
+                            <input type="text" name="start_tag" id="start_tag" placeholder="Aquera00200"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        </div>
+                        <div class="w-1/2">
+                            <label for="end_tag" class="block text-sm font-medium text-gray-700 mb-1">End Tag ID</label>
+                            <input type="text" name="end_tag" id="end_tag" placeholder="Aquera00300"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="range_serials" class="block text-sm font-medium text-gray-700 mb-1">Paste Serial
+                            Numbers (Optional)</label>
+                        <textarea name="range_serials" id="range_serials" rows="5"
+                            placeholder="Paste corresponding serial numbers here...&#10;SN12345&#10;SN12346&#10;(One per line, matching the count of tags)"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"></textarea>
+                        <p class="text-xs text-gray-400 mt-1">If empty, the Tag ID will be used for calculation.</p>
+                    </div>
+                </div>
+
+                <!-- List Input Section -->
+                <div id="section-list" class="hidden space-y-4">
+                    <div>
+                        <label for="tag_list" class="block text-sm font-medium text-gray-700 mb-1">Paste Data (Bulk
+                            Upload)</label>
+                        <p class="text-xs text-gray-500 mb-2">Format: <code>TagID</code> Or
+                            <code>TagID, BarcodeData</code> (Excel Copy compatible)</p>
+                        <textarea name="tag_list" id="tag_list" rows="8"
+                            placeholder="Aquera00200&#10;Aquera00250, SN99999&#10;Aquera00300	SN88888"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                            </path>
+                        </svg>
+                        Generate PDF
+                    </button>
+                    <!-- Preview suggestion -->
+                    <p class="text-center text-xs text-gray-400 mt-3">Generates A4 PDF (3x10 grid)</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script to handle switching modes -->
+    <script>
+        function switchMode(mode) {
+            const rangeBtn = document.getElementById('btn-range');
+            const listBtn = document.getElementById('btn-list');
+            const rangeSection = document.getElementById('section-range');
+            const listSection = document.getElementById('section-list');
+            const modeInput = document.getElementById('mode-input');
+
+            modeInput.value = mode;
+
+            if (mode === 'range') {
+                rangeSection.classList.remove('hidden');
+                listSection.classList.add('hidden');
+
+                // Active Styling
+                rangeBtn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+                rangeBtn.classList.remove('text-gray-500');
+
+                // Inactive Styling
+                listBtn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+                listBtn.classList.add('text-gray-500');
+            } else {
+                rangeSection.classList.add('hidden');
+                listSection.classList.remove('hidden');
+
+                // Active Styling
+                listBtn.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+                listBtn.classList.remove('text-gray-500');
+
+                // Inactive Styling
+                rangeBtn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+                rangeBtn.classList.add('text-gray-500');
+            }
+        }
+    </script>
+</body>
+
+</html>
